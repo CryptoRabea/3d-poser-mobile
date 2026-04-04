@@ -1,6 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import SavePoseModal from '@/components/SavePoseModal';
+import PoseLibrary from '@/components/PoseLibrary';
+import ImportExportPanel from '@/components/ImportExportPanel';
+import { usePoseManager } from '@/hooks/usePoseManager';
+import type { BoneTransform } from '@/lib/poseStorage';
 
 /**
  * 3D Poser Mobile - APK-Compatible Animation & Rigging System
@@ -10,11 +15,11 @@ import React, { useEffect, useRef, useState } from 'react';
  * - Touch-optimized controls for bone manipulation
  * - PWA-ready for APK packaging via Capacitor
  * - LocalStorage for rig/animation persistence
+ * - Save/Load custom poses
  */
 
 export default function Poser3D() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<any>(null);
   const cameraRef = useRef<any>(null);
   const rendererRef = useRef<any>(null);
@@ -29,6 +34,13 @@ export default function Poser3D() {
   const [isRigging, setIsRigging] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showPoseLibrary, setShowPoseLibrary] = useState(false);
+  const [showImportExport, setShowImportExport] = useState(false);
+  const [modelName, setModelName] = useState('Untitled Model');
+
+  // Pose management
+  const poseManager = usePoseManager();
 
   // Initialize Three.js scene
   useEffect(() => {
@@ -145,6 +157,7 @@ export default function Poser3D() {
     if (!file || !sceneRef.current) return;
 
     setIsLoading(true);
+    setModelName(file.name.replace(/\.[^/.]+$/, '')); // Remove file extension
 
     try {
       const THREE = (window as any).THREE;
@@ -191,6 +204,53 @@ export default function Poser3D() {
     setIsRigging(true);
   };
 
+  // Extract bone transforms from current model
+  const extractBoneTransforms = (): BoneTransform[] => {
+    if (!currentModel) return [];
+
+    const bones: BoneTransform[] = [];
+    const THREE = (window as any).THREE;
+
+    currentModel.traverse((child: any) => {
+      if (child.isBone || (child.type === 'Bone' || child.name.includes('Armature'))) {
+        bones.push({
+          name: child.name,
+          position: { x: child.position.x, y: child.position.y, z: child.position.z },
+          rotation: { x: child.rotation.x, y: child.rotation.y, z: child.rotation.z },
+          scale: { x: child.scale.x, y: child.scale.y, z: child.scale.z },
+        });
+      }
+    });
+
+    return bones;
+  };
+
+  // Handle save pose
+  const handleSavePose = async (
+    name: string,
+    description: string,
+    bones: BoneTransform[],
+    tags: string[]
+  ) => {
+    await poseManager.savePose(name, description, bones, modelName, tags);
+  };
+
+  // Handle load pose
+  const handleLoadPose = async (pose: any) => {
+    poseManager.setCurrentPose(pose);
+    setShowPoseLibrary(false);
+  };
+
+  // Handle export all poses
+  const handleExportAllPoses = () => {
+    poseManager.exportAsFile();
+  };
+
+  // Handle import poses from file
+  const handleImportPosesFromFile = async (file: File) => {
+    return await poseManager.importFromFile(file);
+  };
+
   // Reset view
   const handleReset = () => {
     if (cameraRef.current && orbitControlsRef.current) {
@@ -215,6 +275,15 @@ export default function Poser3D() {
     });
   };
 
+  // Open save pose modal
+  const openSavePoseModal = () => {
+    if (!currentModel) {
+      alert('Please load a model first');
+      return;
+    }
+    setShowSaveModal(true);
+  };
+
   return (
     <div ref={containerRef} className="w-full h-screen bg-gray-900 relative overflow-hidden">
       {/* Mobile Menu Button */}
@@ -230,7 +299,7 @@ export default function Poser3D() {
 
       {/* Top Control Bar */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-black/70 backdrop-blur-sm rounded-lg p-3 border border-gray-700">
-        <div className="flex flex-wrap gap-2 justify-center max-w-xs sm:max-w-md md:max-w-2xl">
+        <div className="flex flex-wrap gap-2 justify-center max-w-xs sm:max-w-md md:max-w-4xl">
           <label className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm cursor-pointer transition-colors">
             📁 Import
             <input
@@ -267,6 +336,31 @@ export default function Poser3D() {
             disabled={!currentModel}
           >
             👁 X-Ray
+          </button>
+
+          <button
+            onClick={openSavePoseModal}
+            className="bg-green-700 hover:bg-green-600 text-white px-3 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            disabled={!currentModel}
+            title="Save current pose"
+          >
+            💾 Save
+          </button>
+
+          <button
+            onClick={() => setShowPoseLibrary(true)}
+            className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-2 rounded text-sm transition-colors"
+            title="Browse saved poses"
+          >
+            📚 Library
+          </button>
+
+          <button
+            onClick={() => setShowImportExport(true)}
+            className="bg-orange-700 hover:bg-orange-600 text-white px-3 py-2 rounded text-sm transition-colors"
+            title="Import/Export poses"
+          >
+            📤 Share
           </button>
         </div>
       </div>
@@ -309,7 +403,6 @@ export default function Poser3D() {
                 </button>
                 <button
                   onClick={() => {
-                    // TODO: Implement rigging workflow
                     setIsRigging(false);
                   }}
                   className="flex-1 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded transition-colors"
@@ -331,6 +424,51 @@ export default function Poser3D() {
           </div>
         </div>
       )}
+
+      {/* Save Pose Modal */}
+      <SavePoseModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSave={handleSavePose}
+        modelName={modelName}
+        bones={extractBoneTransforms()}
+        isLoading={poseManager.isLoading}
+      />
+
+      {/* Pose Library */}
+      <PoseLibrary
+        isOpen={showPoseLibrary}
+        onClose={() => setShowPoseLibrary(false)}
+        poses={poseManager.poses}
+        onLoadPose={handleLoadPose}
+        onDeletePose={async (id) => { await poseManager.deletePose(id); }}
+        onExportPose={(id) => {
+          const pose = poseManager.poses.find((p) => p.id === id);
+          if (pose) {
+            const json = JSON.stringify(pose, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${pose.name}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }
+        }}
+        isLoading={poseManager.isLoading}
+      />
+
+      {/* Import/Export Panel */}
+      <ImportExportPanel
+        isOpen={showImportExport}
+        onClose={() => setShowImportExport(false)}
+        onExport={handleExportAllPoses}
+        onImport={handleImportPosesFromFile}
+        totalPoses={poseManager.poses.length}
+        isLoading={poseManager.isLoading}
+      />
     </div>
   );
 }
