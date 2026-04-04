@@ -1,0 +1,33 @@
+{
+  "appId": "com.crg.poser3d",
+  "appName": "3D Poser",
+  "webDir": "dist/public",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "capacitor",
+    "hostname": "localhost"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "ios": {
+    "contentInsetAdjustmentBehavior": "never"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 0,
+      "backgroundColor": "#222222",
+      "showSpinner": false,
+      "spinnerStyle": "large",
+      "spinnerColor": "#4a9eff"
+    },
+    "StatusBar": {
+      "style": "dark",
+      "backgroundColor": "#222222",
+      "overlaysWebView": false
+    }
+  }
+}
