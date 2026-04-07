@@ -45,6 +45,8 @@ export default function Poser3D() {
   // Initialize Three.js scene
   useEffect(() => {
     const initScene = async () => {
+      // Guard: prevent re-initialization if already initialized
+      if (sceneRef.current) return;
       if (!containerRef.current) return;
 
       try {
@@ -78,15 +80,29 @@ export default function Poser3D() {
         containerRef.current.appendChild(renderer.domElement);
         rendererRef.current = renderer;
 
-        // Lighting
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        dirLight.position.set(5, 10, 7.5);
-        scene.add(dirLight);
+        // Lighting - with error handling
+        try {
+          const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+          scene.add(ambientLight);
+        } catch (e) {
+          console.error('Failed to add ambient light:', e);
+        }
 
-        // Grid
-        const grid = new THREE.GridHelper(10, 10, 0x000000, 0x555555);
-        scene.add(grid);
+        try {
+          const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+          dirLight.position.set(5, 10, 7.5);
+          scene.add(dirLight);
+        } catch (e) {
+          console.error('Failed to add directional light:', e);
+        }
+
+        // Grid - with error handling
+        try {
+          const grid = new THREE.GridHelper(10, 10, 0x000000, 0x555555);
+          scene.add(grid);
+        } catch (e) {
+          console.error('Failed to add grid:', e);
+        }
 
         // Controls
         const orbitControls = new OrbitControls(camera, renderer.domElement);
