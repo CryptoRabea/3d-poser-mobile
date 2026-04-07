@@ -98,7 +98,7 @@ export default function Poser3D() {
         // Transform Controls
         const transformControls = new TransformControls(camera, renderer.domElement);
         transformControls.setSize(2.0);
-        scene.add(transformControls as any);
+        // Don't add to scene - TransformControls manages its own objects
         transformControlsRef.current = transformControls;
 
         transformControls.addEventListener('dragging-changed', (event: any) => {
