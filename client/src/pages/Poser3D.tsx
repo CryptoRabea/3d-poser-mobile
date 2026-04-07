@@ -131,10 +131,8 @@ export default function Poser3D() {
         };
         animate();
 
-        // Store loaders for later use
-        (window as any).THREE = THREE;
-        (window as any).GLTFLoader = GLTFLoader;
-        (window as any).DRACOLoader = DRACOLoader;
+        // Store loaders in refs for later use (avoid window pollution)
+        (window as any).__THREE__ = { THREE, GLTFLoader, DRACOLoader };
 
         return () => {
           window.removeEventListener('resize', handleResize);
@@ -160,9 +158,13 @@ export default function Poser3D() {
     setModelName(file.name.replace(/\.[^/.]+$/, '')); // Remove file extension
 
     try {
-      const THREE = (window as any).THREE;
-      const GLTFLoader = (window as any).GLTFLoader;
-      const DRACOLoader = (window as any).DRACOLoader;
+      const modules = (window as any).__THREE__;
+      if (!modules) {
+        console.error('Three.js modules not initialized');
+        setIsLoading(false);
+        return;
+      }
+      const { THREE, GLTFLoader, DRACOLoader } = modules;
 
       const loader = new GLTFLoader();
       const dracoLoader = new DRACOLoader();
@@ -209,7 +211,9 @@ export default function Poser3D() {
     if (!currentModel) return [];
 
     const bones: BoneTransform[] = [];
-    const THREE = (window as any).THREE;
+    const modules = (window as any).__THREE__;
+    if (!modules) return [];
+    const { THREE } = modules;
 
     currentModel.traverse((child: any) => {
       if (child.isBone || (child.type === 'Bone' || child.name.includes('Armature'))) {
@@ -264,7 +268,9 @@ export default function Poser3D() {
   const handleXray = () => {
     if (!currentModel) return;
     setIsXray(!isXray);
-    const THREE = (window as any).THREE;
+    const modules = (window as any).__THREE__;
+    if (!modules) return;
+    const { THREE } = modules;
     currentModel.traverse((child: any) => {
       if (child instanceof THREE.Mesh) {
         if (child.material) {
