@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import SavePoseModal from '@/components/SavePoseModal';
 import PoseLibrary from '@/components/PoseLibrary';
 import ImportExportPanel from '@/components/ImportExportPanel';
+import PoseApplier from '@/components/PoseApplier';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import type { BoneTransform } from '@/lib/poseStorage';
 
@@ -37,7 +38,9 @@ export default function Poser3D() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showPoseLibrary, setShowPoseLibrary] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
+  const [showPoseApplier, setShowPoseApplier] = useState(false);
   const [modelName, setModelName] = useState('Untitled Model');
+  const [appliedPose, setAppliedPose] = useState<BoneTransform[]>([]);
 
   // Pose management
   const poseManager = usePoseManager();
@@ -306,6 +309,15 @@ export default function Poser3D() {
     setShowSaveModal(true);
   };
 
+  // Open pose applier
+  const openPoseApplier = () => {
+    if (!currentModel) {
+      alert('Please load a model first');
+      return;
+    }
+    setShowPoseApplier(true);
+  };
+
   return (
     <div ref={containerRef} className="w-full h-screen bg-gray-900 relative overflow-hidden">
       {/* Mobile Menu Button */}
@@ -370,11 +382,20 @@ export default function Poser3D() {
           </button>
 
           <button
+            onClick={openPoseApplier}
+            className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            disabled={!currentModel}
+            title="Apply saved poses"
+          >
+            📚 Apply Pose
+          </button>
+
+          <button
             onClick={() => setShowPoseLibrary(true)}
-            className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-2 rounded text-sm transition-colors"
+            className="bg-indigo-700 hover:bg-indigo-600 text-white px-3 py-2 rounded text-sm transition-colors"
             title="Browse saved poses"
           >
-            📚 Library
+            📖 Library
           </button>
 
           <button
@@ -480,6 +501,15 @@ export default function Poser3D() {
           }
         }}
         isLoading={poseManager.isLoading}
+      />
+
+      {/* Pose Applier */}
+      <PoseApplier
+        isOpen={showPoseApplier}
+        onClose={() => setShowPoseApplier(false)}
+        currentModel={currentModel}
+        poses={poseManager.poses}
+        onApplyPose={setAppliedPose}
       />
 
       {/* Import/Export Panel */}
