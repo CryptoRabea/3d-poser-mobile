@@ -5,6 +5,7 @@ import SavePoseModal from '@/components/SavePoseModal';
 import PoseLibrary from '@/components/PoseLibrary';
 import ImportExportPanel from '@/components/ImportExportPanel';
 import PoseApplier from '@/components/PoseApplier';
+import AnimationTimeline from '@/components/AnimationTimeline';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import type { BoneTransform } from '@/lib/poseStorage';
 
@@ -39,6 +40,7 @@ export default function Poser3D() {
   const [showPoseLibrary, setShowPoseLibrary] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
   const [showPoseApplier, setShowPoseApplier] = useState(false);
+  const [showAnimationTimeline, setShowAnimationTimeline] = useState(false);
   const [modelName, setModelName] = useState('Untitled Model');
   const [appliedPose, setAppliedPose] = useState<BoneTransform[]>([]);
 
@@ -405,6 +407,15 @@ export default function Poser3D() {
           >
             📤 Share
           </button>
+
+          <button
+            onClick={() => setShowAnimationTimeline(true)}
+            disabled={!currentModel}
+            className="bg-pink-700 hover:bg-pink-600 text-white px-3 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            title="Animation timeline"
+          >
+            🎬 Timeline
+          </button>
         </div>
       </div>
 
@@ -519,6 +530,20 @@ export default function Poser3D() {
         onExport={handleExportAllPoses}
         onImport={handleImportPosesFromFile}
         totalPoses={poseManager.poses.length}
+        isLoading={poseManager.isLoading}
+      />
+
+      {/* Animation Timeline */}
+      <AnimationTimeline
+        isOpen={showAnimationTimeline}
+        onClose={() => setShowAnimationTimeline(false)}
+        currentModel={currentModel}
+        currentPose={extractBoneTransforms()}
+        onApplyPose={(pose) => {
+          if (currentModel && pose.length > 0) {
+            setAppliedPose(pose);
+          }
+        }}
         isLoading={poseManager.isLoading}
       />
     </div>
