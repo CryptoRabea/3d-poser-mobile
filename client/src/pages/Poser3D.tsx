@@ -7,6 +7,8 @@ import ImportExportPanel from '@/components/ImportExportPanel';
 import PoseApplier from '@/components/PoseApplier';
 import AnimationTimeline from '@/components/AnimationTimeline';
 import ModelLoader from '@/components/ModelLoader';
+import PresetPosePanel from '@/components/PresetPosePanel';
+import PresetPoseToolbar from '@/components/PresetPoseToolbar';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import type { BoneTransform } from '@/lib/poseStorage';
 
@@ -43,11 +45,19 @@ export default function Poser3D() {
   const [showPoseApplier, setShowPoseApplier] = useState(false);
   const [showAnimationTimeline, setShowAnimationTimeline] = useState(false);
   const [showModelLoader, setShowModelLoader] = useState(false);
+  const [showPresetPosePanel, setShowPresetPosePanel] = useState(false);
   const [modelName, setModelName] = useState('Untitled Model');
   const [appliedPose, setAppliedPose] = useState<BoneTransform[]>([]);
 
   // Pose management
   const poseManager = usePoseManager();
+
+  // Apply preset pose to model
+  const handleApplyPresetPose = (pose: BoneTransform[]) => {
+    if (currentModel && pose.length > 0) {
+      setAppliedPose(pose);
+    }
+  };
 
   // Initialize Three.js scene
   useEffect(() => {
@@ -450,6 +460,15 @@ export default function Poser3D() {
           </button>
 
           <button
+            onClick={() => setShowPresetPosePanel(true)}
+            disabled={!currentModel}
+            className="bg-yellow-700 hover:bg-yellow-600 text-white px-3 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            title="Quick preset poses"
+          >
+            🎭 Presets
+          </button>
+
+          <button
             onClick={() => setShowPoseLibrary(true)}
             className="bg-indigo-700 hover:bg-indigo-600 text-white px-3 py-2 rounded text-sm transition-colors"
             title="Browse saved poses"
@@ -609,6 +628,14 @@ export default function Poser3D() {
         isOpen={showModelLoader}
         onClose={() => setShowModelLoader(false)}
         onLoadModel={handleLoadSampleModel}
+        isLoading={isLoading}
+      />
+
+      {/* Preset Pose Panel */}
+      <PresetPosePanel
+        isOpen={showPresetPosePanel}
+        onClose={() => setShowPresetPosePanel(false)}
+        onApplyPose={handleApplyPresetPose}
         isLoading={isLoading}
       />
     </div>
