@@ -183,6 +183,7 @@ def create_simple_humanoid_glb(filename, scale=1.0):
             {
                 "buffer": 0,
                 "byteOffset": len(vertices_flat) * 4,
+                "byteLength": len(faces_flat) * 4,
                 "target": 34963
             }
         ],
