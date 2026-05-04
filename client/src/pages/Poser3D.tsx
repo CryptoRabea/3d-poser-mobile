@@ -6,6 +6,7 @@ import PoseLibrary from '@/components/PoseLibrary';
 import ImportExportPanel from '@/components/ImportExportPanel';
 import PoseApplier from '@/components/PoseApplier';
 import AnimationTimeline from '@/components/AnimationTimeline';
+import ModelLoader from '@/components/ModelLoader';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import type { BoneTransform } from '@/lib/poseStorage';
 
@@ -41,6 +42,7 @@ export default function Poser3D() {
   const [showImportExport, setShowImportExport] = useState(false);
   const [showPoseApplier, setShowPoseApplier] = useState(false);
   const [showAnimationTimeline, setShowAnimationTimeline] = useState(false);
+  const [showModelLoader, setShowModelLoader] = useState(false);
   const [modelName, setModelName] = useState('Untitled Model');
   const [appliedPose, setAppliedPose] = useState<BoneTransform[]>([]);
 
@@ -169,6 +171,53 @@ export default function Poser3D() {
 
     initScene();
   }, []);
+
+  // Load sample model by path
+  const handleLoadSampleModel = async (modelPath: string, modelName: string) => {
+    if (!sceneRef.current) return;
+
+    setIsLoading(true);
+    setModelName(modelName);
+
+    try {
+      const modules = (window as any).__THREE__;
+      if (!modules) {
+        console.error('Three.js modules not initialized');
+        setIsLoading(false);
+        return;
+      }
+      const { THREE, GLTFLoader, DRACOLoader } = modules;
+
+      const loader = new GLTFLoader();
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+      loader.setDRACOLoader(dracoLoader);
+
+      loader.load(modelPath, (gltf: any) => {
+        if (currentModel) {
+          sceneRef.current?.remove(currentModel);
+        }
+
+        const model = gltf.scene;
+        sceneRef.current?.add(model);
+        setCurrentModel(model);
+
+        const mixer = new THREE.AnimationMixer(model);
+        setCurrentMixer(mixer);
+
+        const animMap: Record<string, any> = {};
+        gltf.animations.forEach((clip: any) => {
+          animMap[clip.name] = clip;
+        });
+        setAnimations(animMap);
+
+        setIsLoading(false);
+      });
+    } catch (error) {
+      console.error('Failed to load sample model:', error);
+      setIsLoading(false);
+    }
+  };
 
   // Load 3D model
   const handleImportModel = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -346,6 +395,14 @@ export default function Poser3D() {
               className="hidden"
             />
           </label>
+
+          <button
+            onClick={() => setShowModelLoader(true)}
+            className="bg-indigo-700 hover:bg-indigo-600 text-white px-3 py-2 rounded text-sm transition-colors"
+            title="Load sample models"
+          >
+            📦 Samples
+          </button>
 
           <button
             onClick={handleStartRigging}
@@ -545,6 +602,14 @@ export default function Poser3D() {
           }
         }}
         isLoading={poseManager.isLoading}
+      />
+
+      {/* Model Loader */}
+      <ModelLoader
+        isOpen={showModelLoader}
+        onClose={() => setShowModelLoader(false)}
+        onLoadModel={handleLoadSampleModel}
+        isLoading={isLoading}
       />
     </div>
   );
