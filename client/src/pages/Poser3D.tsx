@@ -9,6 +9,7 @@ import AnimationTimeline from '@/components/AnimationTimeline';
 import ModelLoader from '@/components/ModelLoader';
 import PresetPosePanel from '@/components/PresetPosePanel';
 import PresetPoseToolbar from '@/components/PresetPoseToolbar';
+import CustomModelUpload from '@/components/CustomModelUpload';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import type { BoneTransform } from '@/lib/poseStorage';
 
@@ -46,6 +47,7 @@ export default function Poser3D() {
   const [showAnimationTimeline, setShowAnimationTimeline] = useState(false);
   const [showModelLoader, setShowModelLoader] = useState(false);
   const [showPresetPosePanel, setShowPresetPosePanel] = useState(false);
+  const [showCustomUpload, setShowCustomUpload] = useState(false);
   const [modelName, setModelName] = useState('Untitled Model');
   const [appliedPose, setAppliedPose] = useState<BoneTransform[]>([]);
 
@@ -281,6 +283,60 @@ export default function Poser3D() {
     }
   };
 
+  // Handle custom model upload
+  const handleCustomModelUpload = (data: ArrayBuffer, fileName: string, format: 'glb' | 'fbx') => {
+    if (!sceneRef.current) return;
+
+    setIsLoading(true);
+    setModelName(fileName.replace(/\.[^/.]+$/, ''));
+
+    try {
+      const modules = (window as any).__THREE__;
+      if (!modules) {
+        console.error('Three.js modules not initialized');
+        setIsLoading(false);
+        return;
+      }
+      const { THREE, GLTFLoader, DRACOLoader } = modules;
+
+      const loader = new GLTFLoader();
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+      loader.setDRACOLoader(dracoLoader);
+
+      // Create blob from ArrayBuffer
+      const blob = new Blob([data], { type: 'model/gltf-binary' });
+      const url = URL.createObjectURL(blob);
+
+      loader.load(url, (gltf: any) => {
+        if (currentModel) {
+          sceneRef.current?.remove(currentModel);
+        }
+
+        const model = gltf.scene;
+        sceneRef.current?.add(model);
+        setCurrentModel(model);
+
+        // Setup mixer for animations
+        const mixer = new THREE.AnimationMixer(model);
+        setCurrentMixer(mixer);
+
+        // Load animations
+        const animMap: Record<string, any> = {};
+        gltf.animations.forEach((clip: any) => {
+          animMap[clip.name] = clip;
+        });
+        setAnimations(animMap);
+
+        URL.revokeObjectURL(url);
+        setIsLoading(false);
+      });
+    } catch (error) {
+      console.error('Failed to load custom model:', error);
+      setIsLoading(false);
+    }
+  };
+
   // Start rigging process
   const handleStartRigging = () => {
     setIsRigging(true);
@@ -412,6 +468,14 @@ export default function Poser3D() {
             title="Load sample models"
           >
             📦 Samples
+          </button>
+
+          <button
+            onClick={() => setShowCustomUpload(true)}
+            className="bg-orange-700 hover:bg-orange-600 text-white px-3 py-2 rounded text-sm transition-colors"
+            title="Upload custom .glb or .fbx model"
+          >
+            📤 Upload
           </button>
 
           <button
@@ -637,6 +701,14 @@ export default function Poser3D() {
         onClose={() => setShowPresetPosePanel(false)}
         onApplyPose={handleApplyPresetPose}
         isLoading={isLoading}
+      />
+
+      {/* Custom Model Upload */}
+      <CustomModelUpload
+        isOpen={showCustomUpload}
+        onClose={() => setShowCustomUpload(false)}
+        onModelLoaded={handleCustomModelUpload}
+        onError={(error) => console.error('Upload error:', error)}
       />
     </div>
   );
