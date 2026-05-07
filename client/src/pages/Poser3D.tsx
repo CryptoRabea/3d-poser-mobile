@@ -10,8 +10,13 @@ import ModelLoader from '@/components/ModelLoader';
 import PresetPosePanel from '@/components/PresetPosePanel';
 import PresetPoseToolbar from '@/components/PresetPoseToolbar';
 import CustomModelUpload from '@/components/CustomModelUpload';
+import ModelLibraryPanel from '@/components/ModelLibraryPanel';
+import ModelSwitcher from '@/components/ModelSwitcher';
 import { usePoseManager } from '@/hooks/usePoseManager';
+import { useModelLibrary } from '@/hooks/useModelLibrary';
+import { generateThumbnailFromCanvas } from '@/lib/thumbnailGenerator';
 import type { BoneTransform } from '@/lib/poseStorage';
+import type { StoredModel } from '@/lib/modelStorage';
 
 /**
  * 3D Poser Mobile - APK-Compatible Animation & Rigging System
@@ -48,11 +53,15 @@ export default function Poser3D() {
   const [showModelLoader, setShowModelLoader] = useState(false);
   const [showPresetPosePanel, setShowPresetPosePanel] = useState(false);
   const [showCustomUpload, setShowCustomUpload] = useState(false);
+  const [showModelLibrary, setShowModelLibrary] = useState(false);
   const [modelName, setModelName] = useState('Untitled Model');
   const [appliedPose, setAppliedPose] = useState<BoneTransform[]>([]);
 
   // Pose management
   const poseManager = usePoseManager();
+  
+  // Model library management
+  const modelLibrary = useModelLibrary();
 
   // Apply preset pose to model
   const handleApplyPresetPose = (pose: BoneTransform[]) => {
@@ -337,6 +346,39 @@ export default function Poser3D() {
     }
   };
 
+  // Save current model to library
+  const handleSaveModelToLibrary = () => {
+    if (!currentModel) return;
+
+    const bones = extractBoneTransforms();
+    const result = modelLibrary.addModel(
+      modelName,
+      new ArrayBuffer(0), // Placeholder - would need actual model data
+      'glb',
+      {
+        boneCount: bones.length,
+        meshCount: currentModel.children.length,
+        animationCount: Object.keys(animations).length,
+        tags: ['custom'],
+        description: `Saved on ${new Date().toLocaleDateString()}`,
+      }
+    );
+
+    if (result.success) {
+      console.log('Model saved to library:', result.id);
+    }
+  };
+
+  // Load model from library
+  const handleLoadModelFromLibrary = (modelId: string) => {
+    const model = modelLibrary.models.find((m) => m.id === modelId);
+    if (model && model.data.byteLength > 0) {
+      const format = (model.format === 'gltf' ? 'glb' : model.format) as 'glb' | 'fbx';
+      handleCustomModelUpload(model.data, model.fileName, format);
+      setModelName(model.name);
+    }
+  };
+
   // Start rigging process
   const handleStartRigging = () => {
     setIsRigging(true);
@@ -476,6 +518,20 @@ export default function Poser3D() {
             title="Upload custom .glb or .fbx model"
           >
             📤 Upload
+          </button>
+
+          <ModelSwitcher
+            onModelSelected={handleLoadModelFromLibrary}
+            currentModelName={modelName}
+            isLoading={isLoading}
+          />
+
+          <button
+            onClick={() => setShowModelLibrary(true)}
+            className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-2 rounded text-sm transition-colors"
+            title="Open model library"
+          >
+            📚 Library
           </button>
 
           <button
@@ -709,6 +765,14 @@ export default function Poser3D() {
         onClose={() => setShowCustomUpload(false)}
         onModelLoaded={handleCustomModelUpload}
         onError={(error) => console.error('Upload error:', error)}
+      />
+
+      {/* Model Library Panel */}
+      <ModelLibraryPanel
+        isOpen={showModelLibrary}
+        onClose={() => setShowModelLibrary(false)}
+        onSelectModel={handleLoadModelFromLibrary}
+        isLoading={isLoading}
       />
     </div>
   );
