@@ -191,7 +191,17 @@ export default function Poser3D() {
     };
 
     initScene();
-  }, []);
+
+    // Auto-load default model after a short delay to ensure scene is ready
+    const timer = setTimeout(() => {
+      if (sceneRef.current && !currentModel) {
+        handleLoadSampleModel('/models/SimpleHumanoid.glb', 'SimpleHumanoid');
+        setModelName('SimpleHumanoid');
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [currentModel]);
 
   // Load sample model by path
   const handleLoadSampleModel = async (modelPath: string, modelName: string) => {
