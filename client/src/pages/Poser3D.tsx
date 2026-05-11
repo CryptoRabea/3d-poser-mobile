@@ -12,8 +12,11 @@ import PresetPoseToolbar from '@/components/PresetPoseToolbar';
 import CustomModelUpload from '@/components/CustomModelUpload';
 import ModelLibraryPanel from '@/components/ModelLibraryPanel';
 import ModelSwitcher from '@/components/ModelSwitcher';
+import AnimationPresetPanel from '@/components/AnimationPresetPanel';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import { useModelLibrary } from '@/hooks/useModelLibrary';
+import { useAnimationPlayer } from '@/hooks/useAnimationPlayer';
+import { AnimationSequence } from '@/lib/animationSequences';
 import { generateThumbnailFromCanvas } from '@/lib/thumbnailGenerator';
 import type { BoneTransform } from '@/lib/poseStorage';
 import type { StoredModel } from '@/lib/modelStorage';
@@ -56,6 +59,7 @@ export default function Poser3D() {
   const [showModelLibrary, setShowModelLibrary] = useState(false);
   const [modelName, setModelName] = useState('Untitled Model');
   const [appliedPose, setAppliedPose] = useState<BoneTransform[]>([]);
+  const [showAnimationPresets, setShowAnimationPresets] = useState(false);
 
   // Pose management
   const poseManager = usePoseManager();
@@ -63,11 +67,27 @@ export default function Poser3D() {
   // Model library management
   const modelLibrary = useModelLibrary();
 
+  // Animation player
+  const animationPlayer = useAnimationPlayer((bones: BoneTransform[]) => {
+    if (currentModel) {
+      setAppliedPose(bones);
+    }
+  });
+
   // Apply preset pose to model
   const handleApplyPresetPose = (pose: BoneTransform[]) => {
     if (currentModel && pose.length > 0) {
       setAppliedPose(pose);
     }
+  };
+
+  // Handle animation preset playback
+  const handlePlayAnimation = (animation: AnimationSequence) => {
+    animationPlayer.playAnimation(animation);
+  };
+
+  const handleStopAnimation = () => {
+    animationPlayer.stopAnimation();
   };
 
   // Initialize Three.js scene
@@ -622,6 +642,15 @@ export default function Poser3D() {
           >
             🎬 Timeline
           </button>
+
+          <button
+            onClick={() => setShowAnimationPresets(true)}
+            disabled={!currentModel}
+            className="bg-cyan-700 hover:bg-cyan-600 text-white px-3 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            title="Play animation presets"
+          >
+            🎥 Animations
+          </button>
         </div>
       </div>
 
@@ -783,6 +812,16 @@ export default function Poser3D() {
         onClose={() => setShowModelLibrary(false)}
         onSelectModel={handleLoadModelFromLibrary}
         isLoading={isLoading}
+      />
+
+      {/* Animation Preset Panel */}
+      <AnimationPresetPanel
+        isOpen={showAnimationPresets}
+        onClose={() => setShowAnimationPresets(false)}
+        onPlayAnimation={handlePlayAnimation}
+        onStopAnimation={handleStopAnimation}
+        isPlaying={animationPlayer.isPlaying}
+        currentAnimation={animationPlayer.currentAnimation}
       />
     </div>
   );
