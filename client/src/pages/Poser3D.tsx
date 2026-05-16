@@ -13,6 +13,7 @@ import CustomModelUpload from '@/components/CustomModelUpload';
 import ModelLibraryPanel from '@/components/ModelLibraryPanel';
 import ModelSwitcher from '@/components/ModelSwitcher';
 import AnimationPresetPanel from '@/components/AnimationPresetPanel';
+import MixamoDownloader from '@/components/MixamoDownloader';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import { useModelLibrary } from '@/hooks/useModelLibrary';
 import { useAnimationPlayer } from '@/hooks/useAnimationPlayer';
@@ -60,6 +61,7 @@ export default function Poser3D() {
   const [modelName, setModelName] = useState('Untitled Model');
   const [appliedPose, setAppliedPose] = useState<BoneTransform[]>([]);
   const [showAnimationPresets, setShowAnimationPresets] = useState(false);
+  const [showMixamoDownloader, setShowMixamoDownloader] = useState(false);
 
   // Pose management
   const poseManager = usePoseManager();
@@ -651,6 +653,14 @@ export default function Poser3D() {
           >
             🎥 Animations
           </button>
+
+          <button
+            onClick={() => setShowMixamoDownloader(true)}
+            className="bg-amber-700 hover:bg-amber-600 text-white px-3 py-2 rounded text-sm transition-colors"
+            title="Download Mixamo models and animations"
+          >
+            🎭 Mixamo
+          </button>
         </div>
       </div>
 
@@ -822,6 +832,12 @@ export default function Poser3D() {
         onStopAnimation={handleStopAnimation}
         isPlaying={animationPlayer.isPlaying}
         currentAnimation={animationPlayer.currentAnimation}
+      />
+
+      {/* Mixamo Downloader */}
+      <MixamoDownloader
+        isOpen={showMixamoDownloader}
+        onClose={() => setShowMixamoDownloader(false)}
       />
     </div>
   );
