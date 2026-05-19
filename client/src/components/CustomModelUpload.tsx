@@ -9,7 +9,7 @@ import {
 import type { ModelUploadResult } from '@/lib/modelUpload';
 
 interface CustomModelUploadProps {
-  onModelLoaded: (data: ArrayBuffer, fileName: string, format: 'glb' | 'fbx') => void;
+  onModelLoaded: (data: ArrayBuffer | string, fileName: string, format: 'glb' | 'fbx' | 'obj') => void;
   onError?: (error: string) => void;
   isOpen?: boolean;
   onClose?: () => void;
@@ -39,14 +39,16 @@ export default function CustomModelUpload({
       if (result.success && result.data && result.format !== 'unknown') {
         // Check if format requires conversion
         if (requiresConversion(result.format)) {
-          onError?.(`FBX format requires conversion. Please convert to GLB first.`);
-        } else {
-          onModelLoaded(result.data, result.fileName, result.format);
+          onError?.(`${result.format.toUpperCase()} format requires conversion. Please convert to GLB first.`);
+        } else if (result.data) {
+          onModelLoaded(result.data, result.fileName, result.format as 'glb' | 'fbx' | 'obj');
           // Reset after successful load
           setTimeout(() => {
             setUploadResult(null);
             onClose?.();
           }, 1500);
+        } else {
+          onError?.('Failed to load model: No data received');
         }
       } else {
         onError?.(result.error || 'Failed to load model');

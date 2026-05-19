@@ -341,7 +341,7 @@ export default function Poser3D() {
   };
 
   // Handle custom model upload
-  const handleCustomModelUpload = (data: ArrayBuffer, fileName: string, format: 'glb' | 'fbx') => {
+  const handleCustomModelUpload = (data: ArrayBuffer | string, fileName: string, format: 'glb' | 'fbx' | 'obj') => {
     if (!sceneRef.current) return;
 
     setIsLoading(true);

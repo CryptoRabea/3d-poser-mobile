@@ -5,11 +5,11 @@
 
 export interface ModelUploadResult {
   success: boolean;
-  data?: ArrayBuffer;
+  data?: ArrayBuffer | string;
   error?: string;
   fileName: string;
   fileSize: number;
-  format: 'glb' | 'fbx' | 'unknown';
+  format: 'glb' | 'fbx' | 'obj' | 'unknown';
 }
 
 export interface ModelValidationError {
@@ -17,28 +17,29 @@ export interface ModelValidationError {
   message: string;
 }
 
-// Maximum file size: 50MB
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
+// Maximum file size: 200MB
+const MAX_FILE_SIZE = 200 * 1024 * 1024;
 
 // Supported formats
-const SUPPORTED_FORMATS = ['glb', 'fbx', 'gltf'];
+const SUPPORTED_FORMATS = ['glb', 'fbx', 'gltf', 'obj'];
 
 /**
  * Detect file format from file extension or magic bytes
  */
 export function detectFileFormat(
   fileName: string,
-  data?: ArrayBuffer
-): 'glb' | 'fbx' | 'unknown' {
+  data?: ArrayBuffer | string
+): 'glb' | 'fbx' | 'obj' | 'unknown' {
   const extension = fileName.split('.').pop()?.toLowerCase() || '';
 
   // Check by extension first
   if (extension === 'glb') return 'glb';
   if (extension === 'fbx') return 'fbx';
   if (extension === 'gltf') return 'glb'; // GLTF is similar to GLB
+  if (extension === 'obj') return 'obj';
 
   // Check by magic bytes if data is provided
-  if (data && data.byteLength >= 4) {
+  if (data && typeof data !== 'string' && data.byteLength >= 4) {
     const view = new Uint8Array(data);
 
     // GLB magic: 'glTF' (0x67, 0x6C, 0x54, 0x46)
@@ -125,13 +126,13 @@ export async function readFileAsArrayBuffer(
     const format = detectFileFormat(file.name, data);
 
     if (format === 'unknown') {
-      return {
-        success: false,
-        fileName: file.name,
-        fileSize: file.size,
-        format: 'unknown',
-        error: 'Could not detect file format. Please ensure the file is a valid .glb or .fbx model.',
-      };
+    return {
+      success: false,
+      fileName: file.name,
+      fileSize: file.size,
+      format: 'unknown',
+      error: 'Could not detect file format. Please ensure the file is a valid .glb, .fbx, or .obj model.',
+    };
     }
 
     return {
@@ -208,6 +209,6 @@ export function extractModelName(fileName: string): string {
 /**
  * Check if format requires conversion
  */
-export function requiresConversion(format: 'glb' | 'fbx' | 'unknown'): boolean {
-  return format === 'fbx';
+export function requiresConversion(format: 'glb' | 'fbx' | 'obj' | 'unknown'): boolean {
+  return format === 'fbx' || format === 'obj';
 }
