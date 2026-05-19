@@ -14,9 +14,13 @@ import ModelLibraryPanel from '@/components/ModelLibraryPanel';
 import ModelSwitcher from '@/components/ModelSwitcher';
 import AnimationPresetPanel from '@/components/AnimationPresetPanel';
 import MixamoDownloader from '@/components/MixamoDownloader';
+import { AnimationBlendingPanel } from '@/components/AnimationBlendingPanel';
+import { PoseDetectionPanel } from '@/components/PoseDetectionPanel';
+import { PhysicsControlPanel } from '@/components/PhysicsControlPanel';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import { useModelLibrary } from '@/hooks/useModelLibrary';
 import { useAnimationPlayer } from '@/hooks/useAnimationPlayer';
+import { usePhysicsSimulation } from '@/hooks/usePhysicsSimulation';
 import { AnimationSequence } from '@/lib/animationSequences';
 import { generateThumbnailFromCanvas } from '@/lib/thumbnailGenerator';
 import type { BoneTransform } from '@/lib/poseStorage';
@@ -62,6 +66,9 @@ export default function Poser3D() {
   const [appliedPose, setAppliedPose] = useState<BoneTransform[]>([]);
   const [showAnimationPresets, setShowAnimationPresets] = useState(false);
   const [showMixamoDownloader, setShowMixamoDownloader] = useState(false);
+  const [showAnimationBlending, setShowAnimationBlending] = useState(false);
+  const [showPoseDetection, setShowPoseDetection] = useState(false);
+  const [showPhysicsControl, setShowPhysicsControl] = useState(false);
 
   // Pose management
   const poseManager = usePoseManager();
@@ -74,6 +81,15 @@ export default function Poser3D() {
     if (currentModel) {
       setAppliedPose(bones);
     }
+  });
+
+  // Physics simulation
+  const physics = usePhysicsSimulation({
+    onUpdate: (bones) => {
+      if (currentModel) {
+        setAppliedPose(bones);
+      }
+    },
   });
 
   // Apply preset pose to model
@@ -661,6 +677,33 @@ export default function Poser3D() {
           >
             🎭 Mixamo
           </button>
+
+          <button
+            onClick={() => setShowAnimationBlending(true)}
+            disabled={!currentModel}
+            className="bg-indigo-700 hover:bg-indigo-600 text-white px-3 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            title="Blend animations and control playback speed"
+          >
+            🎵 Blend
+          </button>
+
+          <button
+            onClick={() => setShowPoseDetection(true)}
+            disabled={!currentModel}
+            className="bg-teal-700 hover:bg-teal-600 text-white px-3 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            title="Detect pose from webcam or image"
+          >
+            🎥 Detect
+          </button>
+
+          <button
+            onClick={() => setShowPhysicsControl(true)}
+            disabled={!currentModel}
+            className="bg-yellow-700 hover:bg-yellow-600 text-white px-3 py-2 rounded text-sm transition-colors disabled:opacity-50"
+            title="Physics simulation and ragdoll"
+          >
+            ⚡ Physics
+          </button>
         </div>
       </div>
 
@@ -838,6 +881,47 @@ export default function Poser3D() {
       <MixamoDownloader
         isOpen={showMixamoDownloader}
         onClose={() => setShowMixamoDownloader(false)}
+      />
+
+      {/* Animation Blending Panel */}
+      <AnimationBlendingPanel
+        isOpen={showAnimationBlending}
+        onClose={() => setShowAnimationBlending(false)}
+        onBlendedPoseUpdate={(pose) => {
+          if (currentModel && pose.length > 0) {
+            setAppliedPose(pose);
+          }
+        }}
+        isLoading={isLoading}
+      />
+
+      {/* Pose Detection Panel */}
+      <PoseDetectionPanel
+        isOpen={showPoseDetection}
+        onClose={() => setShowPoseDetection(false)}
+        onPoseDetected={(pose) => {
+          if (currentModel && pose.length > 0) {
+            setAppliedPose(pose);
+          }
+        }}
+        isLoading={isLoading}
+      />
+
+      {/* Physics Control Panel */}
+      <PhysicsControlPanel
+        isOpen={showPhysicsControl}
+        onClose={() => setShowPhysicsControl(false)}
+        onStartSimulation={(bones) => physics.startSimulation(bones)}
+        onStopSimulation={() => physics.stopSimulation()}
+        onUpdateConfig={(config) => physics.updateConfig(config)}
+        onApplyImpulse={(bone, impulse) => physics.applyImpulse(bone, impulse)}
+        onSetWind={(strength, direction) => {
+          physics.setWindStrength(strength);
+          physics.setWindDirection(direction);
+        }}
+        isSimulating={physics.isSimulating}
+        currentBones={appliedPose}
+        isLoading={isLoading}
       />
     </div>
   );
