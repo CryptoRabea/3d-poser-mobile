@@ -361,6 +361,32 @@ export default function Poser3D() {
       dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
       loader.setDRACOLoader(dracoLoader);
 
+      // Validate data
+      if (!data) {
+        throw new Error('No model data provided');
+      }
+
+      if (typeof data === 'string' && data.length === 0) {
+        throw new Error('Model data is empty');
+      }
+
+      if (data instanceof ArrayBuffer && data.byteLength === 0) {
+        throw new Error('Model file is empty');
+      }
+
+      if (data instanceof ArrayBuffer && data.byteLength < 4) {
+        throw new Error('Model file is too small to be valid');
+      }
+
+      // Validate GLB magic number if ArrayBuffer
+      if (data instanceof ArrayBuffer) {
+        const view = new Uint8Array(data, 0, 4);
+        const magic = String.fromCharCode(view[0], view[1], view[2], view[3]);
+        if (magic !== 'glTF') {
+          console.warn('Warning: File may not be a valid GLB model, but attempting to load anyway');
+        }
+      }
+
       // Create blob from ArrayBuffer
       const blob = new Blob([data], { type: 'model/gltf-binary' });
       const url = URL.createObjectURL(blob);

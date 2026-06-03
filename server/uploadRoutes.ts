@@ -169,6 +169,39 @@ router.delete('/:fileId', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/upload/file/:fileId
+ * Serve assembled file
+ */
+router.get('/file/:fileId', async (req: Request, res: Response) => {
+  try {
+    const { fileId } = req.params;
+    const fs = await import('fs').then((m) => m.promises);
+    const path = await import('path');
+
+    // Construct file path
+    const uploadsDir = path.join(process.cwd(), '.uploads');
+    const filePath = path.join(uploadsDir, `${fileId}.final`);
+
+    // Check if file exists
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Stream file
+    res.type('model/gltf-binary');
+    res.set('Content-Disposition', `inline; filename="${fileId}.glb"`);
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('File serving error:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to serve file',
+    });
+  }
+});
+
+/**
  * GET /api/upload/stats
  * Get upload statistics
  */
