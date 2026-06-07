@@ -163,6 +163,7 @@ def create_simple_humanoid_glb(filename, scale=1.0):
                 "componentType": 5126,  # FLOAT
                 "count": len(vertices),
                 "type": "VEC3",
+                "byteOffset": 0,
                 "min": [-0.5*scale, 0, -0.15*scale],
                 "max": [0.5*scale, 2.1*scale, 0.15*scale]
             },
@@ -170,13 +171,15 @@ def create_simple_humanoid_glb(filename, scale=1.0):
                 "bufferView": 1,
                 "componentType": 5125,  # UNSIGNED_INT
                 "count": len(faces_flat),
-                "type": "SCALAR"
+                "type": "SCALAR",
+                "byteOffset": 0
             }
         ],
         "bufferViews": [
             {
                 "buffer": 0,
                 "byteOffset": 0,
+                "byteLength": len(vertices_flat) * 4,
                 "byteStride": 12,
                 "target": 34962
             },

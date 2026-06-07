@@ -171,7 +171,8 @@ def create_glb_file(vertices, indices, filename):
     
     # Convert to bytes
     vertex_data = b''.join(struct.pack('<fff', v[0], v[1], v[2]) for v in zip(*[iter(vertices)]*3))
-    index_data = b''.join(struct.pack('<H', i) for i in indices)
+    # Use UNSIGNED_INT for indices to support models with >65535 vertices
+    index_data = b''.join(struct.pack('<I', i) for i in indices)
     
     # Create glTF JSON
     gltf = {
@@ -203,14 +204,16 @@ def create_glb_file(vertices, indices, filename):
                 "componentType": 5126,  # FLOAT
                 "count": len(vertices) // 3,
                 "type": "VEC3",
+                "byteOffset": 0,
                 "min": [min(vertices[i::3]) for i in range(3)],
                 "max": [max(vertices[i::3]) for i in range(3)]
             },
             {
                 "bufferView": 1,
-                "componentType": 5123,  # UNSIGNED_SHORT
+                "componentType": 5125,  # UNSIGNED_INT
                 "count": len(indices),
-                "type": "SCALAR"
+                "type": "SCALAR",
+                "byteOffset": 0
             }
         ],
         "bufferViews": [
@@ -218,7 +221,8 @@ def create_glb_file(vertices, indices, filename):
                 "buffer": 0,
                 "byteLength": len(vertex_data),
                 "byteOffset": 0,
-                "target": 34962
+                "target": 34962,
+                "byteStride": 12
             },
             {
                 "buffer": 0,
