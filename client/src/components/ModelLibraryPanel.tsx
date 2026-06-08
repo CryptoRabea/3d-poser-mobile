@@ -31,12 +31,14 @@ export default function ModelLibraryPanel({
   onSelectModel,
   isLoading: externalLoading,
 }: ModelLibraryPanelProps) {
+  // Must call all hooks before any conditional returns
   const modelLibrary = useModelLibrary();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editTags, setEditTags] = useState('');
 
+  // Early return after all hooks
   if (!isOpen) return null;
 
   const filteredModels = modelLibrary.getFilteredModels();
