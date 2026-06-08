@@ -170,7 +170,7 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    strictPort: false, // Will find next available port if 3000 is busy
+    strictPort: false,
     host: true,
     allowedHosts: [
       ".manuspre.computer",
@@ -183,7 +183,12 @@ export default defineConfig({
     ],
     fs: {
       strict: true,
-      deny: ["**/.*"],
+      deny: ["**/*.*"],
+    },
+    hmr: {
+      protocol: "ws",
+      host: "localhost",
+      port: 3000,
     },
   },
 });
