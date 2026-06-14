@@ -183,16 +183,12 @@ export default defineConfig({
     ],
     fs: {
       strict: true,
-<<<<<<< Updated upstream
-      deny: ["**/.*"],
-=======
       allow: [path.resolve(import.meta.dirname)],
     },
     hmr: {
       protocol: "ws",
       host: "localhost",
       port: 3000,
->>>>>>> Stashed changes
     },
   },
 });
