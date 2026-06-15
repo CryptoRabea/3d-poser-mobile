@@ -17,6 +17,7 @@ import MixamoDownloader from '@/components/MixamoDownloader';
 import { AnimationBlendingPanel } from '@/components/AnimationBlendingPanel';
 import { PoseDetectionPanel } from '@/components/PoseDetectionPanel';
 import { PhysicsControlPanel } from '@/components/PhysicsControlPanel';
+import { BoneWeightVisualizationPanel } from '@/components/BoneWeightVisualizationPanel';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import { useModelLibrary } from '@/hooks/useModelLibrary';
 import { useAnimationPlayer } from '@/hooks/useAnimationPlayer';
@@ -69,6 +70,7 @@ export default function Poser3D() {
   const [showAnimationBlending, setShowAnimationBlending] = useState(false);
   const [showPoseDetection, setShowPoseDetection] = useState(false);
   const [showPhysicsControl, setShowPhysicsControl] = useState(false);
+  const [showWeightVisualization, setShowWeightVisualization] = useState(false);
 
   // Pose management
   const poseManager = usePoseManager();
@@ -730,6 +732,13 @@ export default function Poser3D() {
           >
             ⚡ Physics
           </button>
+          <button
+            onClick={() => setShowWeightVisualization(true)}
+            className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-medium text-sm transition-colors"
+            title="Visualize bone weight influence on mesh"
+          >
+            🎨 Weights
+          </button>
         </div>
       </div>
 
@@ -948,6 +957,16 @@ export default function Poser3D() {
         isSimulating={physics.isSimulating}
         currentBones={appliedPose}
         isLoading={isLoading}
+      />
+
+      <BoneWeightVisualizationPanel
+        isOpen={showWeightVisualization}
+        onClose={() => setShowWeightVisualization(false)}
+        mesh={currentModel}
+        bones={currentModel?.skeleton?.bones || []}
+        onVisualizationChange={(enabled, boneIndex) => {
+          // Handle visualization changes here
+        }}
       />
     </div>
   );
