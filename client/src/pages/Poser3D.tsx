@@ -18,6 +18,7 @@ import { AnimationBlendingPanel } from '@/components/AnimationBlendingPanel';
 import { PoseDetectionPanel } from '@/components/PoseDetectionPanel';
 import { PhysicsControlPanel } from '@/components/PhysicsControlPanel';
 import { BoneWeightVisualizationPanel } from '@/components/BoneWeightVisualizationPanel';
+import { BoneComparisonPanel } from '@/components/BoneComparisonPanel';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import { useModelLibrary } from '@/hooks/useModelLibrary';
 import { useAnimationPlayer } from '@/hooks/useAnimationPlayer';
@@ -71,6 +72,7 @@ export default function Poser3D() {
   const [showPoseDetection, setShowPoseDetection] = useState(false);
   const [showPhysicsControl, setShowPhysicsControl] = useState(false);
   const [showWeightVisualization, setShowWeightVisualization] = useState(false);
+  const [showBoneComparison, setShowBoneComparison] = useState(false);
 
   // Pose management
   const poseManager = usePoseManager();
@@ -739,6 +741,13 @@ export default function Poser3D() {
           >
             🎨 Weights
           </button>
+          <button
+            onClick={() => setShowBoneComparison(true)}
+            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium text-sm transition-colors"
+            title="Compare bone influences and detect conflicts"
+          >
+            📊 Compare
+          </button>
         </div>
       </div>
 
@@ -966,6 +975,16 @@ export default function Poser3D() {
         bones={currentModel?.skeleton?.bones || []}
         onVisualizationChange={(enabled, boneIndex) => {
           // Handle visualization changes here
+        }}
+      />
+
+      <BoneComparisonPanel
+        isOpen={showBoneComparison}
+        onClose={() => setShowBoneComparison(false)}
+        mesh={currentModel}
+        bones={currentModel?.skeleton?.bones || []}
+        onConflictVisualization={(conflicts) => {
+          // Handle conflict visualization here
         }}
       />
     </div>
