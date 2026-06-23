@@ -19,6 +19,7 @@ import { PoseDetectionPanel } from '@/components/PoseDetectionPanel';
 import { PhysicsControlPanel } from '@/components/PhysicsControlPanel';
 import { BoneWeightVisualizationPanel } from '@/components/BoneWeightVisualizationPanel';
 import { BoneComparisonPanel } from '@/components/BoneComparisonPanel';
+import { BatchComparisonPanel } from '@/components/BatchComparisonPanel';
 import { usePoseManager } from '@/hooks/usePoseManager';
 import { useModelLibrary } from '@/hooks/useModelLibrary';
 import { useAnimationPlayer } from '@/hooks/useAnimationPlayer';
@@ -73,6 +74,7 @@ export default function Poser3D() {
   const [showPhysicsControl, setShowPhysicsControl] = useState(false);
   const [showWeightVisualization, setShowWeightVisualization] = useState(false);
   const [showBoneComparison, setShowBoneComparison] = useState(false);
+  const [showBatchComparison, setShowBatchComparison] = useState(false);
 
   // Pose management
   const poseManager = usePoseManager();
@@ -748,6 +750,13 @@ export default function Poser3D() {
           >
             📊 Compare
           </button>
+          <button
+            onClick={() => setShowBatchComparison(true)}
+            className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded font-medium text-sm transition-colors"
+            title="Batch compare multiple bone pairs"
+          >
+            📋 Batch
+          </button>
         </div>
       </div>
 
@@ -986,6 +995,13 @@ export default function Poser3D() {
         onConflictVisualization={(conflicts) => {
           // Handle conflict visualization here
         }}
+      />
+
+      <BatchComparisonPanel
+        isOpen={showBatchComparison}
+        onClose={() => setShowBatchComparison(false)}
+        mesh={currentModel}
+        bones={currentModel?.skeleton?.bones || []}
       />
     </div>
   );
